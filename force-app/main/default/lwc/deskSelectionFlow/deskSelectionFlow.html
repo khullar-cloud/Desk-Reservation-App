@@ -1,0 +1,143 @@
+<template>
+    <lightning-card title="Desk Selection Console" key={renderCount}>
+        <lightning-tabset variant="scoped" active-tab-value={activeTabValue}>
+            <lightning-tab label="Locations" icon-name="standard:location">
+                <div class="slds-p-around_medium">
+                    <lightning-combobox name="location" label="Select Location" value={selectedLocation}
+                        placeholder="Select a Location" options={locationOptions} onchange={handleLocationChange}>
+                    </lightning-combobox>
+                </div>
+            </lightning-tab>
+
+            <lightning-tab label="Offices" icon-name="standard:account">
+                <div class="slds-p-around_medium">
+                    <template if:true={officeOptions}>
+                        <lightning-combobox name="office" label="Select Office" value={selectedOffice}
+                            placeholder="Select an Office" options={officeOptions} onchange={handleOfficeChange}>
+                        </lightning-combobox>
+                    </template>
+                    <template if:false={officeOptions}>
+                        <p class="slds-text-color_weak">Please select a location first.</p>
+                    </template>
+                </div>
+            </lightning-tab>
+
+            <lightning-tab label="Floors" icon-name="standard:household">
+                <div class="slds-p-around_medium">
+                    <template if:true={floorOptions}>
+                        <lightning-combobox name="floor" label="Select Floor" value={selectedFloor}
+                            placeholder="Select a Floor" options={floorOptions} onchange={handleFloorChange}>
+                        </lightning-combobox>
+                    </template>
+                    <template if:false={floorOptions}>
+                        <p class="slds-text-color_weak">Please select an office first.</p>
+                    </template>
+                </div>
+            </lightning-tab>
+
+            <lightning-tab label="Desks" icon-name="standard:workspace">
+                <div class="slds-p-around_medium">
+                    <div class="slds-m-bottom_medium">
+                        <strong>Legend:</strong>
+                        <div class="legend-container">
+                            <div class="legend-item">
+                                <span class="legend-box available"></span> Available
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-box booked"></span> Booked
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-box maintenance"></span> Under Maintenance
+                            </div>
+                        </div>
+                    </div>
+                    <input type="date" label="Select a Date to View Desk Availability" value={selectedDate}
+                        onchange={handleDateChange} />
+                    <template if:true={deskList}>
+                        <h3 class="slds-text-heading_small slds-m-bottom_small">Available Desks</h3>
+                        <div class="desk-grid">
+                            <template for:each={deskList} for:item="desk">
+                                <div key={desk.Id} class={desk.deskCssClass} title={desk.title} data-desk-id={desk.Id}
+                                    onclick={handleDeskClick}>
+                                    <strong>{desk.Desk_Number__c}</strong>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:false={deskList}>
+                        <p class="slds-text-color_weak">Please select a floor to view desks.</p>
+                    </template>
+                </div>
+            </lightning-tab>
+
+            <template if:true={showReservationTab}>
+                <lightning-tab label="Desk Reservation Info" icon-name="standard:event" value="ReservationDetails">
+                    <div class="slds-p-around_medium">
+                        <template if:true={reservationInfo}>
+                            <p><strong>Floor:</strong> {reservationInfo.FloorName}</p>
+                            <p><strong>Office:</strong> {reservationInfo.OfficeName}</p>
+                            <p><strong>Location:</strong> {reservationInfo.LocationName}</p>
+                            <p><strong>Desk:</strong> {reservationInfo.DeskName}</p>
+                            <p><strong>Name:</strong> {reservationInfo.UserName}</p>
+                            <p><strong>Date:</strong> {reservationInfo.ReservationDate}</p>
+                            <p><strong>Status:</strong> {reservationInfo.Status}</p>
+                            <template if:true={canCancel}>
+                                <lightning-input type="checkbox" label="Cancel Reservation"
+                                    onchange={handleCancelCheckbox} checked={isCancelled}>
+                                </lightning-input>
+                            </template>
+                            <c-desk-reservation-viewer
+                                selected-reservation={selectedReservation}></c-desk-reservation-viewer>
+                        </template>
+                    </div>
+                </lightning-tab>
+            </template>
+
+
+            <lightning-tab label="Reservation Info" icon-name="standard:event">
+                <div class="slds-m-top_medium">
+                    <h3 class="slds-text-heading_small">All Reservations From You:</h3>
+                    <template for:each={userReservations} for:item="res">
+                        <div key={res.Id} class="slds-box slds-box_xx-small slds-m-top_x-small">
+                            <p><strong>Date:</strong> {res.Reservation_Date__c}</p>
+                            <p><strong>Desk:</strong> {res.Desk__r.Name}</p>
+                            <p><strong>Floor:</strong> {res.Desk__r.Desks__r.Floors__r.Name}</p>
+                            <p><strong>Office:</strong> {res.Desk__r.Desks__r.Floors__r.Office_Location__r.Name}</p>
+                            <p><strong>Status:</strong> {res.Status__c}</p>
+                            <template if:true={res.canCancel}>
+                                <lightning-input type="checkbox" label="Cancel Reservation" data-id={res.Id}
+                                    onchange={handleCancelCheckbox}>
+                                </lightning-input>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </lightning-tab>
+
+
+        </lightning-tabset>
+    </lightning-card>
+
+    <template if:true={showModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading"
+            class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading" class="slds-modal__title">Reserve Desk {selectedDeskNumber}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-input label="Reservation Name" value={reservationName} onchange={handleReservationName}>
+                    </lightning-input>
+                    <lightning-input type="date" label="Reservation Date" value={reservationDate}
+                        onchange={handleReservationDate}>
+                    </lightning-input>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeModal}></lightning-button>
+                    <lightning-button variant="brand" label="Book Desk" onclick={submitReservation}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

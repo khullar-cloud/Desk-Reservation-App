@@ -1,0 +1,30 @@
+<template>
+    <template if:true={selectedReservation}>
+        <div class="slds-box slds-box_xx-small slds-theme_default">
+            <lightning-button 
+                label="See all reservations for the above user" 
+                onclick={handleSeeAllClick}
+                class="slds-m-top_small">
+            </lightning-button>
+        </div>
+    </template>
+
+    <template if:true={showUserReservations}>
+        <div class="slds-m-top_medium">
+            <h3 class="slds-text-heading_small">Upcoming Reservations for {selectedReservation.User__r.Name}:</h3>
+            <template for:each={userReservations} for:item="res">
+                <div key={res.Id} class="slds-box slds-box_xx-small slds-m-top_x-small">
+                    <p><strong>Date:</strong> {res.Reservation_Date__c}</p>
+                    <p><strong>Desk:</strong> {res.Desk__r.Name}</p>
+                    <p><strong>Floor:</strong> {res.Desk__r.Desks__r.Floors__r.Name}</p>
+                    <p><strong>Office:</strong> {res.Desk__r.Desks__r.Floors__r.Office_Location__r.Name}</p>
+                    <p><strong>Status:</strong> {res.Status__c}</p>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <template if:true={error}>
+        <div class="slds-text-color_error">{error}</div>
+    </template>
+</template>

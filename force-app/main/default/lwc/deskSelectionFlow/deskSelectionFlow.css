@@ -1,0 +1,96 @@
+.desk-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.desk-box {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    position: relative;
+    color: black;
+}
+
+.desk-box:hover {
+    transform: scale(1.05);
+}
+
+.desk-box.available       { background-color: #2e7d32; }
+.desk-box.booked          { background-color: #c62828; }
+.desk-box.maintenance     { background-color: #f9a825; color: #000; }
+
+.desk-box .reservation-status {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    font-size: 12px;
+    font-weight: normal;
+    color: white;
+}
+
+.legend-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.legend-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.legend-box.available    { background-color: #2e7d32; }
+.legend-box.booked       { background-color: #c62828; }
+.legend-box.maintenance  { background-color: #f9a825; }
+
+.slds-modal__container {
+    max-width: 30rem !important;
+    width: 100%;
+}
+
+.modal-header,
+.modal-footer,
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-buttons {
+    gap: 1rem;
+}
+
+input[type="text"],
+input[type="date"] {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-bottom: 1rem;
+}
+
+.slds-button {
+    min-width: 6rem;
+}
+
+.slds-button_brand       { background-color: #0070d2; }
+.slds-button_destructive { background-color: #d50000; }
+.slds-button_neutral     { background-color: #f1f1f1; }

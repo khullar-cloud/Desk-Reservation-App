@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Feedback_Text__c</fullName>
+    <description>Feedback from the customer</description>
+    <inlineHelpText>Write the feedback you want to give to us.</inlineHelpText>
+    <label>Feedback Text</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

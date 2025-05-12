@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ProductDemo__c</fullName>
+    <inlineHelpText>Choose the type of product</inlineHelpText>
+    <label>ProductDemo</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Product a</fullName>
+                <default>false</default>
+                <label>Product a</label>
+            </value>
+            <value>
+                <fullName>Product b</fullName>
+                <default>false</default>
+                <label>Product b</label>
+            </value>
+            <value>
+                <fullName>Product c</fullName>
+                <default>false</default>
+                <label>Product c</label>
+            </value>
+            <value>
+                <fullName>Product d</fullName>
+                <default>false</default>
+                <label>Product d</label>
+            </value>
+            <value>
+                <fullName>Product e</fullName>
+                <default>false</default>
+                <label>Product e</label>
+            </value>
+            <value>
+                <fullName>Product f</fullName>
+                <default>false</default>
+                <label>Product f</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Feature__c</fullName>
+    <inlineHelpText>Select the feature</inlineHelpText>
+    <label>Feature</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <controllingField>ProductDemo__c</controllingField>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Case Sensitive</fullName>
+                <default>false</default>
+                <label>Case Sensitive</label>
+            </value>
+            <value>
+                <fullName>Customer Queries</fullName>
+                <default>false</default>
+                <label>Customer Queries</label>
+            </value>
+            <value>
+                <fullName>Product Support</fullName>
+                <default>false</default>
+                <label>Product Support</label>
+            </value>
+        </valueSetDefinition>
+        <valueSettings>
+            <controllingFieldValue>Product a</controllingFieldValue>
+            <controllingFieldValue>Product b</controllingFieldValue>
+            <controllingFieldValue>Product c</controllingFieldValue>
+            <controllingFieldValue>Product d</controllingFieldValue>
+            <controllingFieldValue>Product e</controllingFieldValue>
+            <controllingFieldValue>Product f</controllingFieldValue>
+            <valueName>Case Sensitive</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Product a</controllingFieldValue>
+            <controllingFieldValue>Product b</controllingFieldValue>
+            <controllingFieldValue>Product c</controllingFieldValue>
+            <controllingFieldValue>Product d</controllingFieldValue>
+            <controllingFieldValue>Product e</controllingFieldValue>
+            <valueName>Customer Queries</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Product a</controllingFieldValue>
+            <controllingFieldValue>Product b</controllingFieldValue>
+            <controllingFieldValue>Product c</controllingFieldValue>
+            <controllingFieldValue>Product d</controllingFieldValue>
+            <controllingFieldValue>Product e</controllingFieldValue>
+            <valueName>Product Support</valueName>
+        </valueSettings>
+    </valueSet>
+</CustomField>
