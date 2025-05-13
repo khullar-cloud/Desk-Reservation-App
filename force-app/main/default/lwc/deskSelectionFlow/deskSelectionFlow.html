@@ -85,6 +85,27 @@
                                 <lightning-input type="checkbox" label="Cancel Reservation"
                                     onchange={handleCancelCheckbox} checked={isCancelled}>
                                 </lightning-input>
+                                <template if:true={showCancelConfirmation}>
+                                    <section role="dialog" tabindex="-1" aria-modal="true"
+                                        class="slds-modal slds-fade-in-open">
+                                        <div class="slds-modal__container">
+                                            <header class="slds-modal__header">
+                                                <h2 class="slds-modal__title">Confirm Cancellation</h2>
+                                            </header>
+                                            <div class="slds-modal__content slds-p-around_medium">
+                                                <p>Are you sure you want to cancel this reservation?</p>
+                                            </div>
+                                            <footer class="slds-modal__footer">
+                                                <button class="slds-button slds-button_neutral"
+                                                    onclick={cancelCancel}>No</button>
+                                                <button class="slds-button slds-button_destructive"
+                                                    onclick={confirmCancel}>Yes, Cancel</button>
+                                            </footer>
+                                        </div>
+                                    </section>
+                                    <div class="slds-backdrop slds-backdrop_open"></div>
+                                </template>
+
                             </template>
                             <c-desk-reservation-viewer
                                 selected-reservation={selectedReservation}></c-desk-reservation-viewer>
@@ -108,6 +129,27 @@
                                 <lightning-input type="checkbox" label="Cancel Reservation" data-id={res.Id}
                                     onchange={handleCancelCheckbox}>
                                 </lightning-input>
+                                <template if:true={showCancelConfirmation}>
+                                    <section role="dialog" tabindex="-1" aria-modal="true"
+                                        class="slds-modal slds-fade-in-open">
+                                        <div class="slds-modal__container">
+                                            <header class="slds-modal__header">
+                                                <h2 class="slds-modal__title">Confirm Cancellation</h2>
+                                            </header>
+                                            <div class="slds-modal__content slds-p-around_medium">
+                                                <p>Are you sure you want to cancel this reservation?</p>
+                                            </div>
+                                            <footer class="slds-modal__footer">
+                                                <button class="slds-button slds-button_neutral"
+                                                    onclick={cancelCancel}>No</button>
+                                                <button class="slds-button slds-button_destructive"
+                                                    onclick={confirmCancel}>Yes, Cancel</button>
+                                            </footer>
+                                        </div>
+                                    </section>
+                                    <div class="slds-backdrop slds-backdrop_open"></div>
+                                </template>
+
                             </template>
                         </div>
                     </template>

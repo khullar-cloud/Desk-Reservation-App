@@ -19,7 +19,8 @@ export default class DeskSelectionFlow extends LightningElement {
     @track userReservations = [];
     @track _desksWiredResult;
     @track isCancelled = false;
-
+    @track showCancelConfirmation = false;
+    @track reservationToCancelId = null;
 
     locationOptions = [];
     officeOptions = [];
@@ -192,24 +193,36 @@ export default class DeskSelectionFlow extends LightningElement {
         this.showModal = true;
     }
 
-    async handleCancelCheckbox(event) {
-        if (event.target.checked) {
-            const reservationId = event.target.dataset.id || this.reservationInfo?.Id;
-
-            try {
-                await cancelReservation({ reservationId });
-                this.showToast('Success', 'Reservation cancelled', 'success');
-                this.resetReservationView();
-                this.forceComponentRefresh();
-                this.isCancelled = true;
-            } catch (error) {
-                this.showError('Failed to cancel reservation', error);
-                this.isCancelled = false;
-            }
-        } else {
-            this.isCancelled = false;
-        }
+   handleCancelCheckbox(event) {
+    if (event.target.checked) {
+        this.reservationToCancelId = event.target.dataset.id || this.reservationInfo?.Id;
+        this.showCancelConfirmation = true;
+    } else {
+        this.isCancelled = false;
     }
+}
+
+async confirmCancel() {
+    try {
+        await cancelReservation({ reservationId: this.reservationToCancelId });
+        this.showToast('Success', 'Reservation cancelled', 'success');
+        this.resetReservationView();
+        this.forceComponentRefresh();
+        this.isCancelled = true;
+    } catch (error) {
+        this.showError('Failed to cancel reservation', error);
+        this.isCancelled = false;
+    } finally {
+        this.showCancelConfirmation = false;
+        this.reservationToCancelId = null;
+    }
+}
+
+cancelCancel() {
+    this.showCancelConfirmation = false;
+    this.reservationToCancelId = null;
+}
+
 
 
     forceComponentRefresh() {
