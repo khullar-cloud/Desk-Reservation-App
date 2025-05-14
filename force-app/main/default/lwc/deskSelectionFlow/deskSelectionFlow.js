@@ -21,6 +21,10 @@ export default class DeskSelectionFlow extends LightningElement {
     @track isCancelled = false;
     @track showCancelConfirmation = false;
     @track reservationToCancelId = null;
+    @track wiredReservationResult;
+    @track deskToUpdate; 
+    @track reservationDateToCancel;
+
 
     locationOptions = [];
     officeOptions = [];
@@ -104,13 +108,31 @@ export default class DeskSelectionFlow extends LightningElement {
     }
 
     @wire(getAllReservations, { userId: '$userId' })
-    wiredUserReservations({ error, data }) {
+    wiredUserReservations(result) {
+        this.wiredReservationResult = result;
+        const { data, error } = result;
+
         if (data) {
-            const today = new Date().setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
             this.userReservations = data.map(res => {
-                const resDate = new Date(res.Reservation_Date__c).setHours(0, 0, 0, 0);
+              
+                const [year, month, day] = res.Reservation_Date__c.split('-').map(Number);
+                const dateObj = new Date(year, month - 1, day); 
+                
+                const resDate = new Date(dateObj);
+                resDate.setHours(0, 0, 0, 0);
+                
+                const formattedDate = `${(month).toString().padStart(2, '0')}/` +
+                                      `${day.toString().padStart(2, '0')}/` +
+                                      `${year}`;
+
                 return {
                     ...res,
+                    deskId: res.Desk__c, 
+                    originalDate: res.Reservation_Date__c,
+                    Reservation_Date__c: formattedDate,
                     canCancel: res.Status__c === 'Booked' && resDate >= today
                 };
             });
@@ -123,8 +145,6 @@ export default class DeskSelectionFlow extends LightningElement {
             this.showToast('Error', 'Failed to load your reservations', 'error');
         }
     }
-
-
 
     async loadDesks() {
         try {
@@ -164,14 +184,24 @@ export default class DeskSelectionFlow extends LightningElement {
                 reservationDate: this.selectedDate
             });
 
+            const rawDate = result.Reservation_Date__c;
+            let displayDate = rawDate;
+            
+            if (rawDate && rawDate.includes('-')) {
+                const [year, month, day] = rawDate.split('-').map(Number);
+                displayDate = `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
+            }
+
             this.reservationInfo = {
                 Id: result.Id,
+                DeskId: result.Desk__c, 
                 DeskName: result.Desk__r?.Name ?? 'N/A',
                 FloorName: result.Desk__r?.Desks__r?.Name ?? 'N/A',
                 OfficeName: result.Desk__r?.Desks__r?.Floors__r?.Name ?? 'N/A',
                 LocationName: result.Desk__r?.Desks__r?.Floors__r?.Office_Location__r?.Name ?? 'N/A',
                 UserName: result.User__r?.Name ?? 'N/A',
-                ReservationDate: result.Reservation_Date__c ?? 'N/A',
+                ReservationDate: displayDate,
+                originalDate: rawDate, 
                 Status: result.Status__c ?? 'N/A',
                 UserId: result.User__r?.Id,
                 CreatedById: result.CreatedById
@@ -182,76 +212,158 @@ export default class DeskSelectionFlow extends LightningElement {
             const resDate = result.Reservation_Date__c;
             const isFutureOrToday = resDate >= today;
 
-            this.canCancel = isFutureOrToday && [result.User__r?.Id, result.CreatedById].includes(this.userId); this.showReservationTab = true;
+            this.canCancel = isFutureOrToday && [result.User__r?.Id, result.CreatedById].includes(this.userId);
+            this.showReservationTab = true;
         } catch (error) {
             this.showError('Error fetching reservation info', error);
         }
     }
+
     prepareNewReservation() {
         this.reservationDate = this.selectedDate;
         this.reservationName = '';
         this.showModal = true;
     }
 
-   handleCancelCheckbox(event) {
-    if (event.target.checked) {
-        this.reservationToCancelId = event.target.dataset.id || this.reservationInfo?.Id;
-        this.showCancelConfirmation = true;
-    } else {
-        this.isCancelled = false;
+    handleCancelCheckbox(event) {
+        if (event.target.checked) {
+            const reservationId = event.target.dataset.id;
+            this.reservationToCancelId = reservationId || this.reservationInfo?.Id;
+            
+            if (reservationId) {
+                const reservation = this.userReservations.find(res => res.Id === reservationId);
+                if (reservation) {
+                    this.deskToUpdate = reservation.deskId;
+                    this.reservationDateToCancel = reservation.originalDate;
+                    console.log('Reservation from list selected for cancellation:', this.deskToUpdate, this.reservationDateToCancel);
+                }
+            } else if (this.reservationInfo && this.reservationInfo.DeskId) {
+                this.deskToUpdate = this.reservationInfo.DeskId;
+                this.reservationDateToCancel = this.reservationInfo.originalDate;
+                console.log('Reservation from details selected for cancellation:', this.deskToUpdate, this.reservationDateToCancel);
+            }
+            
+            this.showCancelConfirmation = true;
+        } else {
+            this.isCancelled = false;
+        }
     }
-}
 
-async confirmCancel() {
-    try {
-        await cancelReservation({ reservationId: this.reservationToCancelId });
-        this.showToast('Success', 'Reservation cancelled', 'success');
-        this.resetReservationView();
-        this.forceComponentRefresh();
-        this.isCancelled = true;
-    } catch (error) {
-        this.showError('Failed to cancel reservation', error);
-        this.isCancelled = false;
-    } finally {
+    async confirmCancel() {
+        try {
+            console.log('Confirming cancel for reservation:', this.reservationToCancelId);
+            console.log('Desk to update:', this.deskToUpdate);
+            console.log('Reservation date:', this.reservationDateToCancel);
+            
+            const cancelledReservation = await cancelReservation({ reservationId: this.reservationToCancelId });
+            
+            await this.loadDesks();
+            await refreshApex(this.wiredReservationResult);
+            
+            if (this.deskToUpdate && this.reservationDateToCancel) {
+                const cleanReservationDate = this.cleanDateFormat(this.reservationDateToCancel);
+                const cleanSelectedDate = this.cleanDateFormat(this.selectedDate);
+                
+                if (cleanReservationDate === cleanSelectedDate) {
+                    console.log('Updating desk UI for cancelled reservation');
+                    this.updateDeskStatusInList(this.deskToUpdate, 'available', this.reservationDateToCancel);
+                }
+            }
+            
+            this.showToast('Success', 'Reservation cancelled', 'success');
+            this.resetReservationView();
+            this.isCancelled = true;
+        } catch (error) {
+            console.error('Failed to cancel reservation:', error);
+            this.showError('Failed to cancel reservation', error);
+            this.isCancelled = false;
+        } finally {
+            this.showCancelConfirmation = false;
+            this.reservationToCancelId = null;
+        }
+    }
+
+    cancelCancel() {
         this.showCancelConfirmation = false;
         this.reservationToCancelId = null;
     }
-}
 
-cancelCancel() {
-    this.showCancelConfirmation = false;
-    this.reservationToCancelId = null;
-}
-
-
-
-    forceComponentRefresh() {
+    async forceComponentRefresh() {
         const refreshEvent = new CustomEvent('refresh');
         this.dispatchEvent(refreshEvent);
-
+        
         this.renderCount++;
-
-        if (this.selectedDeskId) {
-            this.updateDeskStatusInList(this.selectedDeskId, 'booked');
-        }
-
         this.isLoading = true;
 
-        setTimeout(() => {
-            Promise.all([
-                this.loadDesks(),
-                refreshApex(this._desksWiredResult),
-                this.wiredUserReservations.refresh ? this.wiredUserReservations.refresh() : null
-            ])
-                .finally(() => {
-                    this.isLoading = false;
+        try {
+            if (this.deskToUpdate && this.reservationDateToCancel) {
+                const cleanReservationDate = this.cleanDateFormat(this.reservationDateToCancel);
+                const cleanSelectedDate = this.cleanDateFormat(this.selectedDate);
+                
+                if (cleanReservationDate === cleanSelectedDate) {
+                    this.updateDeskStatusInList(this.deskToUpdate, 'available', this.reservationDateToCancel);
+                    await this.loadDesks(); 
+                }
+            }
+    
+            if (this._desksWiredResult) {
+                await refreshApex(this._desksWiredResult).catch(error => {
+                    console.error('Error refreshing desks:', error);
                 });
-        }, 100);
+            }
+            
+            if (this.wiredReservationResult) {
+                await refreshApex(this.wiredReservationResult).catch(error => {
+                    console.error('Error refreshing reservations:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Error during component refresh:', error);
+        } finally {
+            this.isLoading = false;
+            this.deskToUpdate = null;
+            this.reservationDateToCancel = null;
+        }
     }
 
-    updateDeskStatusInList(deskId, newStatus) {
-        if (!this.deskList || this.deskList.length === 0) return;
+    cleanDateFormat(dateString) {
+        if (!dateString) return '';
+        
+        try {
+            let year, month, day;
+            
+            if (dateString.includes('-')) {
+                [year, month, day] = dateString.split('-').map(Number);
+            } 
+            else if (dateString.includes('/')) {
+                const parts = dateString.split('/').map(Number);
+                month = parts[0];
+                day = parts[1];
+                year = parts[2];
+            } else {
+                return dateString; 
+            }
+            
+            return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Error cleaning date format:', error, dateString);
+            return dateString; 
+        }
+    }
 
+    updateDeskStatusInList(deskId, newStatus, reservationDate) {
+        if (!this.deskList || this.deskList.length === 0) return;
+        
+        const cleanReservationDate = this.cleanDateFormat(reservationDate);
+        const cleanSelectedDate = this.cleanDateFormat(this.selectedDate);
+        
+        if (cleanReservationDate !== cleanSelectedDate) {
+            console.log('Date mismatch - not updating desk view. Reservation:', cleanReservationDate, 'Selected:', cleanSelectedDate);
+            return;
+        }
+        
+        console.log('Updating desk status in list:', deskId, newStatus);
+        
         const updatedDeskList = this.deskList.map(desk => {
             if (desk.Id === deskId) {
                 const isBooked = newStatus === 'booked';
@@ -275,23 +387,39 @@ cancelCancel() {
             this.showToast('Error', 'Please fill in all fields.', 'error');
             return;
         }
-
         try {
             await createDeskReservation({
-                deskId: this.selectedDeskId,
-                reservationDate: this.reservationDate,
-                reservationName: this.reservationName
-            });
+                    deskId: this.selectedDeskId,
+                    reservationDate: this.reservationDate,
+                    reservationName: this.reservationName
+                });
 
-            this.updateDeskStatusInList(this.selectedDeskId, 'booked');
-
-            this.showToast('Success', 'Desk booked successfully', 'success');
+            this.updateDeskStatusInList(this.selectedDeskId, 'booked', this.reservationDate);
+            
+            this.showToast('Success', `Desk booked successfully for ${this.formatDateDisplay(this.reservationDate)}`, 'success');
+            
             this.closeModal();
+            
+            if (this.cleanDateFormat(this.reservationDate) === this.cleanDateFormat(this.selectedDate)) {
+                await this.fetchReservation(this.selectedDeskId);
+                this.showReservationTab = true;
+            } else {
+                this.showReservationTab = false;
+            }
+            
+            await refreshApex(this.wiredReservationResult);
+            
         } catch (error) {
-            this.showToast('Error', error.body.message || 'Error creating reservation', 'error');
+            this.showToast('Error', error.body?.message || 'Error creating reservation', 'error');
         }
     }
 
+    formatDateDisplay(dateString) {
+        if (!dateString || !dateString.includes('-')) return dateString;
+        
+        const [year, month, day] = dateString.split('-').map(Number);
+        return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;
+    }
 
     resetReservationView() {
         this.showReservationTab = false;

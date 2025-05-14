@@ -1,5 +1,4 @@
 public with sharing class DeskReservationService {
-    
     public static void createReservation(String deskId, Date reservationDate, String reservationName) {
     if (String.isBlank(deskId) || reservationDate == null || String.isBlank(reservationName)) {
         throw new AuraHandledException('Invalid input data.');
@@ -128,7 +127,7 @@ public static Desk_Reservation__c getReservationForDeskOnDate(Id deskId, Date re
                    Desk__r.Desks__r.Floors__r.Office_Location__r.Name
             FROM Desk_Reservation__c
             WHERE User__c = :userId
-            ORDER BY Reservation_Date__c ASC
+            ORDER BY Status__c ASC, Reservation_Date__c DESC
         ];
     }
 }
